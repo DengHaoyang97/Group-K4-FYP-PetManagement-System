@@ -174,7 +174,7 @@ class _SOSPageState extends State<SOSPage> {
             ),
           ),
 
-          // **🔹 Current Location**
+      
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -214,7 +214,7 @@ class _SOSPageState extends State<SOSPage> {
 
           const SizedBox(height: 20),
 
-          // **🔹 Rescue History Table**
+      
           Expanded(
             flex: 3,
             child: Padding(

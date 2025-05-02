@@ -1,0 +1,10 @@
+{
+    "language": "eng",
+    "model_path": "assets/tessdata/eng.traineddata",
+    "psm": "11",
+    "oem": "1",
+    "preserve_interword_spaces": "1",
+    "char_whitelist": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+    "output_format": "text"
+  }
+  

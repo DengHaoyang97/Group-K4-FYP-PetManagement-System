@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#22C55E',
+                        secondary: '#6B7280'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '2px',
+                        DEFAULT: '4px',
+                        'md': '8px',
+                        'lg': '12px',
+                        'xl': '16px',
+                        '2xl': '20px',
+                        '3xl': '24px',
+                        'full': '9999px',
+                        'button': '4px'
+                    }
+                }
+            }
+        };
+
+        function redirectToConsole(url) {
+            // Create a hidden form to send a GET request and redirect
+            const form = document.createElement('form');
+            form.method = 'GET';  // Or 'POST' if necessary
+            form.action = url;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+    <style>
+        body {
+            min-height: 1024px;
+            background-color: #FBFAFF;
+        }
+        .function-card {
+            transition: all 0.3s ease;
+        }
+        .function-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(123, 97, 255, 0.1);
+        }
+        .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <nav class="bg-white/80 backdrop-blur-sm shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <span class="font-['Pacifico'] text-2xl text-primary">logo</span>
+                        <span class="ml-4 text-xl font-semibold text-gray-800">Pet Management System</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600"></i>
+                            </div>
+                            <span class="text-gray-700">Dr. Sarah Wilson</span>
+                        </div>
+                        <button onclick="window.location.href='/login'" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 !rounded-button whitespace-nowrap">
+						Log out
+						</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Pet Management System</h1>
+                <p class="text-gray-500 text-lg">Please select a function to proceed</p>
+            </div>
+            <div class="grid grid-cols-3 gap-12 max-w-6xl mx-auto">
+                <!-- Doctor Consultation -->
+                <div class="function-card bg-white p-10 rounded-xl shadow-sm text-center cursor-pointer">
+                    <div class="icon-wrapper mx-auto mb-6 bg-primary/10 rounded-full">
+                        <i class="fas fa-comments text-4xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-2">Doctor Consultation</h2>
+                    <p class="text-gray-600 text-sm">Real-time communication with pet owners for online consultations</p>
+                    <div class="mt-6">
+                        <button onclick="redirectToConsole('./chat.html')" class="inline-flex items-center text-primary text-sm font-medium">
+                            Enter Console
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="function-card bg-white p-10 rounded-xl shadow-sm text-center cursor-pointer">
+                    <div class="icon-wrapper mx-auto mb-6 bg-primary/10 rounded-full">
+                        <i class="fas fa-database text-4xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900 mb-2">Data Management</h2>
+                    <p class="text-gray-600 text-sm">Comprehensive pet information management and medical records</p>
+                    <div class="mt-6">
+                        <button onclick="redirectToConsole('./manage.html')" class="inline-flex items-center text-primary text-sm font-medium">
+                            Enter Console
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+				<!-- Pet Emergency Service -->
+				<div class="function-card bg-white p-10 rounded-xl shadow-sm text-center cursor-pointer">
+				  <div class="icon-wrapper mx-auto mb-6 bg-primary/10 rounded-full">
+					<i class="fas fa-ambulance text-4xl text-primary"></i>
+				  </div>
+				  <h2 class="text-xl font-semibold text-gray-900 mb-2">Pet Emergency Service</h2>
+				  <p class="text-gray-600 text-sm">Quickly respond to pet emergencies and SOS alerts</p>
+				  <div class="mt-6">
+					<a href="./sos.html" class="inline-flex items-center text-primary text-sm font-medium">
+					  Enter Console
+					  <i class="fas fa-arrow-right ml-2"></i>
+					</a>
+				  </div>
+				</div>
+            </div>
+        </main>
+        <footer class="bg-white mt-auto border-t border-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center text-gray-400 text-sm">
+                    © 2024 Pet Management System. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+            var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+
+            // Convert sheet to JSON to filter blank rows
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+            // Filter out blank rows (rows where all cells are empty, null, or undefined)
+            var filteredData = jsonData.filter(row => row.some(filledCell));
+
+            // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+            var headerRowIndex = filteredData.findIndex((row, index) =>
+              row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+            );
+            // Fallback
+            if (headerRowIndex === -1 || headerRowIndex > 25) {
+              headerRowIndex = 0;
+            }
+
+            // Convert filtered JSON back to CSV
+            var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+            csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+            return csv;
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
+    }
+    return gk_fileData[filename] || "";
+    }
+    </script><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worker Chat System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="script.js"></script>
+<style>
+    /* 消息样式 */
+    .message-worker {
+        margin-left: auto;
+        background-color: #DCF8C6; /* 绿色背景，表示 worker 消息 */
+        border-radius: 10px;
+        padding: 8px 12px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    .message-user {
+        margin-right: auto;
+        background-color: #E5E7EB; /* 灰色背景，表示 user 消息 */
+        border-radius: 10px;
+        padding: 8px 12px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    .red-dot {
+        display: none;
+        width: 10px;
+        height: 10px;
+        background-color: red;
+        border-radius: 50%;
+        margin-left: 8px;
+    }
+    .suggestion-area {
+        background-color: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+    }
+    .suggestion-box {
+        max-height: 150px;
+        overflow-y: auto;
+        margin-top: 8px;
+        padding: 8px;
+        border-top: 1px solid #e5e7eb;
+    }
+</style>
+</head>
+<body class="bg-gray-100">
+<div class="flex h-screen">
+<!-- Left Sidebar (User List) -->
+<div class="w-1/4 bg-white p-4 border-r">
+    <h1 class="text-2xl font-bold text-green-600">Chat System</h1>
+    <div class="relative mt-4">
+        <input type="text" id="searchUser" placeholder="Search users..." 
+            class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400">
+    </div>
+    <div id="userList" class="mt-4 space-y-2 overflow-y-auto max-h-[80vh]"></div>
+</div>
+
+<!-- Right Chat Section -->
+<div class="flex-1 flex flex-col">
+    <!-- Chat Header -->
+    <div class="p-4 border-b bg-white flex items-center justify-between">
+        <h2 id="selectedUser" class="text-xl font-bold">Select a user</h2>
+        <button id="refreshChat" class="bg-gray-300 text-black px-3 py-1 rounded text-sm">
+            Refresh
+        </button>
+    </div>
+
+    <!-- Chat Box -->
+    <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-2 bg-gray-50"></div>
+
+    <!-- Suggestion Area -->
+    <div class="suggestion-area mx-4">
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">Suggestions</h3>
+        <div class="flex items-center space-x-2">
+            <input id="suggestionInput" type="text" placeholder="Write a suggestion..." 
+                class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button id="submitSuggestion" class="bg-blue-500 text-white px-4 py-2 rounded-md">
+                Submit
+            </button>
+        </div>
+        <div id="suggestionBox" class="suggestion-box"></div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-4 bg-white border-t flex">
+        <input id="messageInput" type="text" placeholder="Type a message..." 
+            class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400">
+        <button id="sendMessage" class="ml-2 bg-green-500 text-white px-4 py-2 rounded-md">
+            Send
+        </button>
+    </div>
+</div>
+</div>
+</body>
+</html>

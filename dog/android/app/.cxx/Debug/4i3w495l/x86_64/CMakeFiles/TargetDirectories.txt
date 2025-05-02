@@ -1,0 +1,2 @@
+D:/Users/FinalYearProject/dog/android/app/.cxx/Debug/4i3w495l/x86_64/CMakeFiles/edit_cache.dir
+D:/Users/FinalYearProject/dog/android/app/.cxx/Debug/4i3w495l/x86_64/CMakeFiles/rebuild_cache.dir

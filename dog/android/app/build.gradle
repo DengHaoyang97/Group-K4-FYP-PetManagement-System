@@ -1,0 +1,80 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin" // Flutter Gradle 插件
+}
+
+android {
+    namespace = "com.example.dog" // 确保设置正确的命名空间
+    compileSdkVersion 35 // 设置为最新版本
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.dog" // 应用的唯一标识符
+        minSdkVersion 21 // 最低支持的 SDK 版本，根据需求调整
+        targetSdkVersion 35 // 目标 SDK 版本
+        versionCode 1
+        versionName "1.0"
+    }
+
+    aaptOptions {
+        noCompress 'tflite' // 防止压缩 TensorFlow Lite 模型文件
+        noCompress 'lite' // 防止压缩其他 Lite 文件
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8 // 使用 Java 1.8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8" // 配置 Kotlin JVM 目标版本
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false // 禁用代码压缩
+            shrinkResources false // 禁用资源压缩
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' // 配置混淆规则
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            // 强制使用 TensorFlow Lite 的指定版本，避免依赖冲突
+            force 'org.tensorflow:tensorflow-lite-api:2.10.0'
+            // 添加依赖排除以避免重复类问题
+            eachDependency { details ->
+                if (details.requested.group == 'com.google.ai.edge.litert' && details.requested.name == 'litert-api') {
+                    details.useTarget "org.tensorflow:tensorflow-lite-api:2.10.0"
+                }
+            }
+        }
+    }
+
+    // 解决 lStar 错误：设置 Java 编译器参数
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+flutter {
+    source = "../.." // Flutter 项目路径
+}
+
+dependencies {
+    // 引入 TensorFlow Lite 的 API
+    implementation('org.tensorflow:tensorflow-lite-api:2.10.0') {
+        exclude group: 'com.google.ai.edge.litert', module: 'litert-api' // 排除冲突的模块
+    }
+
+    // 添加必要的 AndroidX 依赖
+    implementation "androidx.core:core-ktx:1.10.1"
+
+    // 引入 coreLibraryDesugaring 解决编译问题
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.2.2"
+
+    // 如果使用了其他依赖，请在此处添加
+}

@@ -1,0 +1,238 @@
+<script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+            var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+
+            // Convert sheet to JSON to filter blank rows
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+            // Filter out blank rows (rows where all cells are empty, null, or undefined)
+            var filteredData = jsonData.filter(row => row.some(filledCell));
+
+            // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+            var headerRowIndex = filteredData.findIndex((row, index) =>
+              row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+            );
+            // Fallback
+            if (headerRowIndex === -1 || headerRowIndex > 25) {
+              headerRowIndex = 0;
+            }
+
+            // Convert filtered JSON back to CSV
+            var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+            csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+            return csv;
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
+    }
+    return gk_fileData[filename] || "";
+    }
+    </script><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>SOS Emergency Response System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- 引入百度地图 API -->
+<script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=HAYeA1xXLlRVnA4A9CKjuwD1X7W13IiJ"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#2E7D32',
+                    secondary: '#81C784'
+                },
+                borderRadius: {
+                    'none': '0px',
+                    'sm': '2px',
+                    DEFAULT: '4px',
+                    'md': '8px',
+                    'lg': '12px',
+                    'xl': '16px',
+                    '2xl': '20px',
+                    '3xl': '24px',
+                    'full': '9999px',
+                    'button': '4px'
+                }
+            }
+        }
+    }
+</script>
+<style>
+    .status-pending { background-color: #FFF3E0; color: #E65100; }
+    .status-progress { background-color: #E3F2FD; color: #1565C0; }
+    .status-completed { background-color: #E8F5E9; color: #2E7D32; }
+    #mapContainer { height: 500px; width: 100%; }
+</style>
+</head>
+<body class="min-h-[1024px] bg-[#F1F8E9]">
+<header class="bg-primary p-6 shadow-lg">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-white text-3xl font-bold mb-2">SOS Emergency Response System</h1>
+        <p class="text-secondary">System Status: Active | Last Updated: <span id="currentTime"></span></p>
+    </div>
+</header>
+<main class="max-w-7xl mx-auto p-6 space-y-6">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-primary">Emergency Requests</h2>
+            <div class="space-x-4">
+                <button id="refreshBtn" class="bg-primary text-white px-4 py-2 !rounded-button flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                </button>
+                <button class="border border-primary text-primary px-4 py-2 !rounded-button flex items-center">
+                    <i class="fas fa-download mr-2"></i> Export
+                </button>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-[#F1F8E9]">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">User</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">Location</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">Pet Name</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">Contact</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">Status</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-primary">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sosTableBody" class="divide-y divide-gray-200">
+                    <!-- SOS 数据将在这里动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-primary mb-4">Emergency Locations Map</h2>
+        <div id="mapContainer" class="w-full rounded-lg overflow-hidden"></div>
+    </div>
+</main>
+
+<script>
+    let map;
+
+    // 初始化百度地图
+    function initMap() {
+        map = new BMapGL.Map("mapContainer");
+        const point = new BMapGL.Point(114.177, 22.302);
+        map.centerAndZoom(point, 15);
+        map.enableScrollWheelZoom(true);
+        map.setHeading(64.5);
+        map.setTilt(73);
+    }
+
+    // 更新时间
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleString('en-GB');
+    }
+
+    // 获取 SOS 数据并填充表格
+    async function fetchSOSData() {
+        try {
+            const response = await fetch("http://127.0.0.1:3000/sos");
+            const sosData = await response.json();
+            const tableBody = document.getElementById("sosTableBody");
+            tableBody.innerHTML = "";
+
+            sosData.forEach(sos => {
+                const row = document.createElement("tr");
+                row.classList.add("hover:bg-[#F1F8E9]");
+                const location = `${sos.location.latitude}, ${sos.location.longitude}`;
+                const statusClass = sos.status === "ing" ? "status-pending" : "status-completed";
+                const statusText = sos.status === "ing" ? "Pending" : "Completed";
+                row.innerHTML = `
+                    <td class="px-6 py-4">${sos.username || 'N/A'}</td>
+                    <td class="px-6 py-4">${location}</td>
+                    <td class="px-6 py-4">${sos.petName || 'Unknown Pet'}</td>
+                    <td class="px-6 py-4">${sos.contact || 'N/A'}</td>
+                    <td class="px-6 py-4 flex items-center space-x-2">
+                        <span class="${statusClass} px-3 py-1 rounded-full text-sm">${statusText}</span>
+                        ${
+                            sos.status === "ing"
+                            ? `<button onclick="completeSOS('${sos.username}', '${sos.petId}')" class="bg-green-500 text-white px-3 py-1 rounded-button text-sm hover:bg-green-600">Complete</button>`
+                            : ''
+                        }
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="showOnMap(${sos.location.latitude}, ${sos.location.longitude}, '${sos.petName}')" class="text-primary hover:text-secondary">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // 默认显示第一个 SOS 的位置
+            if (sosData.length > 0) {
+                showOnMap(sosData[0].location.latitude, sosData[0].location.longitude, sosData[0].petName);
+            }
+        } catch (error) {
+            console.error("❌ 获取 SOS 数据失败", error);
+        }
+    }
+
+    // 完成 SOS
+    async function completeSOS(username, petId) {
+        console.log("Sending request with username:", username, "petId:", petId);
+        try {
+            const response = await fetch(`http://127.0.0.1:3000/sos/${username}/${petId}/complete`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                fetchSOSData(); // 刷新表格
+            } else {
+                alert(result.message || "❌ 更新 SOS 状态失败");
+            }
+        } catch (error) {
+            console.error("❌ 更新 SOS 状态失败", error);
+            alert("❌ 更新 SOS 状态失败");
+        }
+    }
+
+    // 在地图上显示 SOS 位置
+    function showOnMap(latitude, longitude, petName) {
+        const point = new BMapGL.Point(longitude, latitude);
+        map.centerAndZoom(point, 15);
+        map.clearOverlays(); // 清除之前的标记
+        const marker = new BMapGL.Marker(point);
+        map.addOverlay(marker);
+        const label = new BMapGL.Label(petName, { offset: new BMapGL.Size(20, -10) });
+        marker.setLabel(label);
+    }
+
+    // 刷新按钮事件
+    document.getElementById('refreshBtn').onclick = fetchSOSData;
+
+    // 页面加载时初始化
+    updateTime();
+    setInterval(updateTime, 1000);
+    initMap();
+    fetchSOSData();
+</script>
+</body>
+</html>

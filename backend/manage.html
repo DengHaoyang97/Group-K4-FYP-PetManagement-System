@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Management System - Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2E8B57',
+                        secondary: '#E8F5E9'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-[#F0F8F0]">
+        <!-- 头部 -->
+        <header class="bg-white border-b border-primary px-6 py-4 shadow-sm flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-primary">Pet Management System - Admin</h1>
+            <button id="logoutBtn" class="text-primary hover:text-primary-dark">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </button>
+        </header>
+
+        <div class="flex h-[calc(100vh-72px)]">
+            <!-- 侧边栏用户列表 -->
+            <div class="w-64 bg-white shadow-lg overflow-y-auto">
+                <div class="p-4 border-b border-gray-200">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search users..." class="w-full pl-10 pr-4 py-2 border-none bg-gray-50 rounded-lg text-sm">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 flex justify-center items-center"></i>
+                    </div>
+                </div>
+                <div id="userList" class="divide-y divide-gray-100">
+                    <!-- 用户列表将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <!-- 统计数据 -->
+                <div class="grid grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+                        <p id="totalUsers" class="text-2xl font-bold text-primary">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-700">Total Pets</h3>
+                        <p id="totalPets" class="text-2xl font-bold text-primary">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-700">Total Reports</h3>
+                        <p id="totalReports" class="text-2xl font-bold text-primary">0</p>
+                    </div>
+                </div>
+
+                <!-- 用户信息 -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-primary mb-4">User Information</h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                            <input type="text" id="username" class="w-full p-2 border border-gray-200 rounded-lg outline-none" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input type="text" id="password" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-4">
+                        <button id="editUserBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark">
+                            <i class="fas fa-save mr-2"></i>Save
+                        </button>
+                        <button id="deleteUserBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                            <i class="fas fa-trash mr-2"></i>Delete User
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 宠物信息 -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-primary mb-4">Pet Information</h2>
+                    <div id="petList">
+                        <!-- 宠物列表将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑宠物模态框 -->
+    <div id="editPetModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-semibold text-primary mb-4">Edit Pet</h2>
+            <input type="hidden" id="editPetUsername">
+            <input type="hidden" id="editPetId">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input type="text" id="editPetName" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                    <input type="number" id="editPetAge" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                    <input type="text" id="editPetGender" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+                    <input type="number" id="editPetWeight" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Breed</label>
+                    <input type="text" id="editPetBreed" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Species</label>
+                    <input type="text" id="editPetSpecies" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
+                    <input type="text" id="editPetDoctor" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Owner Tel</label>
+                    <input type="text" id="editPetTel" class="w-full p-2 border border-gray-200 rounded-lg outline-none">
+                </div>
+            </div>
+            <div class="mt-4 flex gap-4">
+                <button onclick="savePet()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark">
+                    <i class="fas fa-save mr-2"></i>Save
+                </button>
+                <button onclick="closeModal('editPetModal')" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUsername = null;
+
+        // 获取统计数据
+        async function fetchStats() {
+            try {
+                const response = await fetch("http://127.0.0.1:3000/stats");
+                const stats = await response.json();
+                document.getElementById('totalUsers').textContent = stats.totalUsers;
+                document.getElementById('totalPets').textContent = stats.totalPets;
+                document.getElementById('totalReports').textContent = stats.totalReports;
+            } catch (error) {
+                console.error("❌ 获取统计数据失败", error);
+            }
+        }
+
+        // 获取用户列表
+        async function fetchUsers() {
+            try {
+                const response = await fetch("http://127.0.0.1:3000/users");
+                const users = await response.json();
+                const userList = document.getElementById("userList");
+                userList.innerHTML = "";
+
+                users.forEach(user => {
+                    const userElement = document.createElement("div");
+                    userElement.classList.add("p-4", "cursor-pointer", "hover:bg-[#F5F9F6]");
+                    userElement.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">${user.username.charAt(0).toUpperCase()}</div>
+                            <div>
+                                <h3 class="font-medium text-gray-900">${user.username}</h3>
+                            </div>
+                        </div>
+                    `;
+                    userElement.onclick = () => switchUser(user.username);
+                    userList.appendChild(userElement);
+                });
+
+                // 默认选中第一个用户
+                if (users.length > 0) {
+                    switchUser(users[0].username);
+                }
+            } catch (error) {
+                console.error("❌ 获取用户数据失败", error);
+            }
+        }
+
+        // 切换用户
+        async function switchUser(username) {
+            currentUsername = username;
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/user/${username}`);
+                const user = await response.json();
+                document.getElementById('username').value = user.username;
+                document.getElementById('password').value = user.password;
+
+                // 显示宠物信息
+                const petList = document.getElementById('petList');
+                petList.innerHTML = '';
+                const pets = user.pets || [];
+                pets.forEach(pet => {
+                    const petElement = document.createElement("div");
+                    petElement.classList.add("border", "border-gray-200", "rounded-lg", "p-4", "mb-4");
+                    petElement.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900">${pet.name || 'Unnamed'}</h3>
+                            <div>
+                                <button onclick="editPet('${user.username}', '${pet.pet_id}')" class="text-primary hover:text-primary-dark mr-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deletePet('${user.username}', '${pet.pet_id}')" class="text-red-500 hover:text-red-600">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <p><strong>Age:</strong> ${pet.age || ''}</p>
+                            <p><strong>Gender:</strong> ${pet.gender || ''}</p>
+                            <p><strong>Weight:</strong> ${pet.weight || ''} kg</p>
+                            <p><strong>Breed:</strong> ${pet.breed || ''}</p>
+                            <p><strong>Species:</strong> ${pet.species || ''}</p>
+                            <p><strong>Doctor:</strong> ${pet.doctor || ''}</p>
+                            <p><strong>Owner Tel:</strong> ${pet.tel || ''}</p>
+                        </div>
+                        <h4 class="text-md font-semibold text-primary mt-4">Health Reports</h4>
+                        <div class="mt-2 overflow-x-auto">
+                            ${pet.health_reports && pet.health_reports.length > 0
+                                ? `
+                                    <table class="min-w-full border border-gray-200">
+                                        <thead>
+                                            <tr class="bg-gray-100">
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Report Name</th>
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Content</th>
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Timestamp</th>
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${pet.health_reports.map(report => `
+                                                <tr class="border-t">
+                                                    <td class="px-4 py-2 text-sm text-gray-900">${report.report_name || 'Unnamed Report'}</td>
+                                                    <td class="px-4 py-2 text-sm text-gray-600">${report.raw_text || 'No content'}</td>
+                                                    <td class="px-4 py-2 text-sm text-gray-600">${report.timestamp || 'N/A'}</td>
+                                                    <td class="px-4 py-2 text-sm">
+                                                        <button onclick="deleteReport('${user.username}', '${pet.pet_id}', '${report.report_id}')" class="text-red-500 hover:text-red-600">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                `
+                                : '<p class="text-gray-500">No health reports available.</p>'}
+                        </div>
+                    `;
+                    petList.appendChild(petElement);
+                });
+            } catch (error) {
+                console.error("❌ 获取用户信息失败", error);
+            }
+        }
+
+        // 编辑用户
+        document.getElementById('editUserBtn').onclick = async () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                await fetch(`http://127.0.0.1:3000/user/${username}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                alert("User updated successfully!");
+            } catch (error) {
+                console.error("❌ 更新用户失败", error);
+                alert("Failed to update user.");
+            }
+        };
+
+        // 删除用户
+        document.getElementById('deleteUserBtn').onclick = async () => {
+            if (confirm("Are you sure you want to delete this user?")) {
+                const username = document.getElementById('username').value;
+                try {
+                    await fetch(`http://127.0.0.1:3000/user/${username}`, {
+                        method: 'DELETE'
+                    });
+                    fetchUsers();
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('petList').innerHTML = '';
+                } catch (error) {
+                    console.error("❌ 删除用户失败", error);
+                    alert("Failed to delete user.");
+                }
+            }
+        };
+
+        // 编辑宠物
+        async function editPet(username, petId) {
+            const modal = document.getElementById('editPetModal');
+            const response = await fetch(`http://127.0.0.1:3000/user/${username}`);
+            const user = await response.json();
+            const pet = user.pets.find(p => p.pet_id === petId);
+            document.getElementById('editPetUsername').value = username;
+            document.getElementById('editPetId').value = petId;
+            document.getElementById('editPetName').value = pet.name || '';
+            document.getElementById('editPetAge').value = pet.age || '';
+            document.getElementById('editPetGender').value = pet.gender || '';
+            document.getElementById('editPetWeight').value = pet.weight || '';
+            document.getElementById('editPetBreed').value = pet.breed || '';
+            document.getElementById('editPetSpecies').value = pet.species || '';
+            document.getElementById('editPetDoctor').value = pet.doctor || '';
+            document.getElementById('editPetTel').value = pet.tel || '';
+            modal.style.display = 'block';
+        }
+
+        // 保存宠物
+        async function savePet() {
+            const username = document.getElementById('editPetUsername').value;
+            const petId = document.getElementById('editPetId').value;
+            const updatedPet = {
+                pet_id: petId,
+                name: document.getElementById('editPetName').value,
+                age: parseInt(document.getElementById('editPetAge').value) || 0,
+                gender: document.getElementById('editPetGender').value,
+                weight: parseFloat(document.getElementById('editPetWeight').value) || 0,
+                breed: document.getElementById('editPetBreed').value,
+                species: document.getElementById('editPetSpecies').value,
+                doctor: document.getElementById('editPetDoctor').value,
+                tel: document.getElementById('editPetTel').value,
+                health_reports: (await (await fetch(`http://127.0.0.1:3000/user/${username}`)).json())
+                    .pets.find(p => p.pet_id === petId).health_reports
+            };
+            try {
+                await fetch(`http://127.0.0.1:3000/pet/${username}/${petId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedPet)
+                });
+                closeModal('editPetModal');
+                switchUser(username);
+                alert("Pet updated successfully!");
+            } catch (error) {
+                console.error("❌ 更新宠物失败", error);
+                alert("Failed to update pet.");
+            }
+        }
+
+        // 删除宠物
+        async function deletePet(username, petId) {
+            if (confirm("Are you sure you want to delete this pet?")) {
+                try {
+                    await fetch(`http://127.0.0.1:3000/pet/${username}/${petId}`, {
+                        method: 'DELETE'
+                    });
+                    switchUser(username);
+                    alert("Pet deleted successfully!");
+                } catch (error) {
+                    console.error("❌ 删除宠物失败", error);
+                    alert("Failed to delete pet.");
+                }
+            }
+        }
+
+        // 删除体检报告
+        async function deleteReport(username, petId, reportId) {
+            if (confirm("Are you sure you want to delete this report?")) {
+                try {
+                    await fetch(`http://127.0.0.1:3000/report/${username}/${petId}/${reportId}`, {
+                        method: 'DELETE'
+                    });
+                    switchUser(username);
+                    alert("Report deleted successfully!");
+                } catch (error) {
+                    console.error("❌ 删除报告失败", error);
+                    alert("Failed to delete report.");
+                }
+            }
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 搜索用户
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const userElements = document.getElementById('userList').children;
+            Array.from(userElements).forEach(element => {
+                const username = element.querySelector('h3').textContent.toLowerCase();
+                element.style.display = username.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+
+        // 登出
+        document.getElementById('logoutBtn').onclick = () => {
+            window.location.href = '/login.html'; // 假设有一个登录页面
+        };
+
+        // 页面加载时获取数据
+        fetchStats();
+        fetchUsers();
+    </script>
+</body>
+</html>

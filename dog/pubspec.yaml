@@ -1,0 +1,47 @@
+name: dog
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.10.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.0.15
+  sqflite: ^2.2.0+3
+  path: ^1.8.3
+  flutter_vision: ^1.0.0
+  image_picker: ^0.8.9
+  onnxruntime: ^1.4.1
+#  tflite_flutter: ^0.9.2
+  image: ^3.0.1
+  mongo_dart: ^0.10.4
+  http: ^0.13.3
+  geolocator: ^10.1.1 # Make sure to add this package
+  geolocator_android: ^4.6.0
+  fl_chart: ^0.63.0
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/tessdata/
+    - assets/avatar1.png
+    - assets/avatar2.png
+    - assets/avatar3.png
+    - assets/model.tflite
+    - assets/labels.txt

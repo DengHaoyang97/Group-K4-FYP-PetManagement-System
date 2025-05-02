@@ -1,0 +1,18 @@
+// 根级别的 build.gradle 文件
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // 如果有老版本库需求，可以保留
+    }
+}
+
+rootProject.buildDir = "../build"
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
